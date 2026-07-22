@@ -209,7 +209,7 @@ if prompt := st.chat_input("Pede aqui o teu café, bebida ou refeição..."):
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.1-flash",
             contents=chat_history,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
