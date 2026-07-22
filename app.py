@@ -8,7 +8,7 @@ from supabase import create_client, Client
 # ⚙️ CONFIGURAÇÃO DO ESTABELECIMENTO
 # ==========================================
 NOME_ESTABELECIMENTO = "Café Triangulo"
-LOGO_URL = "https://raw.githubusercontent.com/danielrecto-art/snackbar-atendente/main/file_000000005f0881f49a73ed28f23b0776.png"
+LOGO_URL = "https://raw.githubusercontent.com/danielrecto-art/snackbar-atendente/main/logo2.png"
 
 # Configuração da Página
 st.set_page_config(
