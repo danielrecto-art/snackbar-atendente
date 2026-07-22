@@ -4,135 +4,155 @@ from google import genai
 from google.genai import types
 from supabase import create_client, Client
 
-# ==========================================
-# 1. CONFIGURAÇÕES & CHAVES DE API
-# ==========================================
-GEMINI_API_KEY = "AIzaSyDFiOMw9_JhWNq6nzk_sJKSINlzytl0dTg"
-SUPABASE_URL = "https://ycuvvjpwyzwlbarmemrw.supabase.co"
-SUPABASE_KEY = "sb_publishable_AuV5aTNqFoht005aZMZ9nQ_0eWNLXAs"
-
-# Configuração da página web para telemóvel
+# Configuração da Página do Streamlit
 st.set_page_config(
-    page_title="Snack-Bar Atendente",
+    page_title="N's Snack-Bar - Atendente Virtual",
     page_icon="🍔",
     layout="centered"
 )
 
-# Detectar a mesa pela URL (ex: ?mesa=03)
-query_params = st.query_params
-mesa_atual = query_params.get("mesa", "Mesa 01")
+# ==========================================
+# 1. CARREGAR SEGREDOS (ST.SECRETS)
+# ==========================================
+try:
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+except Exception as e:
+    st.error("⚠️ As chaves de API não foram encontradas. Configura os 'Secrets' no Streamlit Cloud.")
+    st.stop()
 
-# Inicialização dos Clientes
+# ==========================================
+# 2. INICIALIZAR LIGAÇÕES (SUPABASE E GEMINI)
+# ==========================================
 @st.cache_resource
-def iniciar_clientes():
-    client_gemini = genai.Client(api_key=GEMINI_API_KEY)
-    client_supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    return client_gemini, client_supabase
+def init_supabase() -> Client:
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
 
-gemini_client, supabase = iniciar_clientes()
+supabase = init_supabase()
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ==========================================
-# 2. PROMPT DE SISTEMA DO GEMINI
+# 3. IDENTIFICAÇÃO DA MESA (VIA URL)
 # ==========================================
-SYSTEM_INSTRUCTION = f"""
-És o assistente virtual de atendimento ao cliente num Snack-Bar / Cafetaria.
-O cliente está sentado na {mesa_atual}.
+# Lê o parâmetro ?mesa=Mesa%2001 da URL (Predefinição: Mesa 01)
+mesa_atual = st.query_params.get("mesa", "Mesa 01")
 
-REGRAS OBRIGATÓRIAS DE ATENDIMENTO:
-1. Sê sempre breve, simpático e direto.
-2. NUNCA inventes produtos que não estejam listados no MENU. Se o cliente pedir algo fora do menu, informa educadamente que não temos disponível.
-3. Regista com atenção os detalhes do pedido (ex: "com gelo e limão", "sem alho", "bem passado").
-4. Quando o cliente indicar que quer terminar, faz um RESUMO CLARO do pedido com preços e total acumulado.
-5. Pergunta explicitamente: "Posso confirmar e enviar este pedido para o balcão?"
-6. QUANDO O CLIENTE CONFIRMAR EXPLICITAMENTE (ex: "sim", "podes", "confirmo"), deves responder a confirmar ao cliente E incluir obrigatoriamente no FINAL da tua resposta esta etiqueta técnica exata:
-   [GRAVAR_DB: <lista de itens resumida> | <valor_total_numerico>]
-   Exemplo: [GRAVAR_DB: 1x Tosta Mista, 1x Imperial | 5.00]
+st.title("🍔 N's Snack-Bar")
+st.caption(f"📍 A atender na: **{mesa_atual}**")
 
-MENU DISPONÍVEL:
+# ==========================================
+# 4. INSTRUÇÃO DO SISTEMA (EMENTA E REGRAS DA IA)
+# ==========================================
+SYSTEM_INSTRUCTION = """
+És o Atendente Virtual simpático e eficiente do "N's Snack-Bar".
+O teu objetivo é ajudar o cliente a fazer o pedido para a mesa onde se encontra.
 
-[BEBIDAS]
-- Imperial 20cl: 1.50€
-- Caneca 40cl: 2.80€
-- Coca-Cola / Sumol / Guaraná (Lata 33cl): 1.80€
-- Água Mineral 50cl: 1.20€
-- Água das Pedras / Frisante 25cl: 1.50€
+EMENTA & PREÇOS:
+- Café / Descafeinado: 1.00 EUR
+- Galão / Meia de Leite: 1.50 EUR
+- Água (50cl): 1.00 EUR
+- Refrigerantes (Coca-Cola, Sumol, Fanta, Ice Tea): 1.80 EUR
+- Cerveja / Imperial: 1.50 EUR
+- Tosta Mista (Pão de Forma ou Caseiro): 3.50 EUR
+- Sandes de Fiambre / Queijo: 2.00 EUR
+- Hambúrguer no Pão (com queijo e alface): 5.50 EUR
+- Batata Frita: 2.50 EUR
 
-[CAFETARIA E SNACKS]
-- Café Express / Descafeinado: 0.90€
-- Meia de Leite: 1.40€
-- Torrada em Pão de Forma: 1.80€
-- Tosta Mista em Pão Caseiro: 3.50€
+REGRAS DE ATENDIMENTO:
+1. Responde sempre em Português de Portugal.
+2. Ajuda com personalizações (ex: tosta sem manteiga, café curto).
+3. Mantém a conta atualizada e indica sempre o total acumulado ao cliente.
+4. Quando o cliente CONFIRMAR EXPLICITAMENTE que quer enviar/finalizar o pedido (ex: "podes enviar", "confirmo", "está tudo"):
+   - Responde ao cliente a confirmar que o pedido vai dar entrada na cozinha/balcão.
+   - No FINAL ABSOLUTO da tua resposta, adiciona OBRIGATORIAMENTE esta tag exata (sem mais nada a seguir):
+     [PEDIDO_CONFIRMADO: <lista_dos_itens> | <total_numerico>]
 
-[PETISCOS E PRATOS RÁPIDOS]
-- Prego no Pão (Novilho): 4.50€
-- Prego em Prato (com Batata Frita e Ovo): 7.50€
-- Pica-Pau de Porco (Dose): 8.50€
-- Porção de Batata Frita: 2.50€
+   Exemplo de tag no final:
+   [PEDIDO_CONFIRMADO: 1x Café, 1x Tosta Mista sem manteiga | 4.50]
 """
 
 # ==========================================
-# 3. GESTÃO DE SESSÃO & CHAT
+# 5. GERIR HISTÓRICO DAS MENSAGENS
 # ==========================================
-if "chat" not in st.session_state:
-    st.session_state.chat = gemini_client.chats.create(
-        model="gemini-3.1-flash-lite",
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION,
-            temperature=0.2
-        )
-    )
-
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": f"Olá! 👋 Bem-vindo ao Snack-Bar. Estou a atender a **{mesa_atual}**. O que lhe apetece hoje?"}
+        {
+            "role": "assistant", 
+            "content": f"Olá! Bem-vindo ao **N's Snack-Bar**! 👋\nEstou a atender a **{mesa_atual}**. O que vai desejar hoje?"
+        }
     ]
 
-# Header na Interface
-st.title("🍔 Snack-Bar Digital")
-st.caption(f"📍 A atender na **{mesa_atual}**")
-st.divider()
+# Mostrar histórico de conversa no ecrã
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# Exibir histórico de mensagens
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
-
-# Entrada do Utilizador
-if user_input := st.chat_input("Escreva aqui o seu pedido..."):
-    # Guardar e mostrar a mensagem do cliente
-    st.session_state.messages.append({"role": "user", "content": user_input})
+# ==========================================
+# 6. PROCESSAR ENTRADA DO CLIENTE
+# ==========================================
+if prompt := st.chat_input("Escreve o teu pedido aqui..."):
+    # Guardar e exibir mensagem do utilizador
+    st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.write(user_input)
+        st.markdown(prompt)
 
-    # Obter resposta da IA
-    with st.chat_message("assistant"):
-        with st.spinner("A pensar..."):
-            resposta = st.session_state.chat.send_message(user_input)
-            texto_resposta = resposta.text
+    # Converter histórico para o formato exigido pelo Gemini SDK
+    chat_history = []
+    for m in st.session_state.messages:
+        role = "user" if m["role"] == "user" else "model"
+        chat_history.append(
+            types.Content(
+                role=role, 
+                parts=[types.Part.from_text(text=m["content"])]
+            )
+        )
 
-            # Verificar se a IA enviou a etiqueta de gravação no Supabase
-            padrao = r"\[GRAVAR_DB:\s*(.*?)\s*\|\s*([\d\.]+)\]"
-            match = re.search(padrao, texto_resposta)
+    # Chamar a API do Gemini
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=chat_history,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                temperature=0.3,
+            )
+        )
+        
+        resposta_texto = response.text
 
-            if match:
-                itens = match.group(1)
-                total = float(match.group(2))
+        # Verificar se a IA confirmou o pedido (procura pela tag secreta)
+        tag_match = re.search(r"\[PEDIDO_CONFIRMADO:\s*(.*?)\s*\|\s*([\d\.]+)\]", resposta_texto)
 
-                # Gravar na Base de Dados
-                try:
-                    dados_pedido = {
-                        "mesa": mesa_atual,
-                        "itens": itens,
-                        "total": total,
-                        "estado": "pendente"
-                    }
-                    supabase.table("pedidos").insert(dados_pedido).execute()
-                    st.success("🚀 Pedido enviado para o balcão com sucesso!")
-                except Exception as e:
-                    st.error(f"Erro ao enviar pedido para o balcão: {e}")
+        if tag_match:
+            itens_pedido = tag_match.group(1)
+            total_pedido = float(tag_match.group(2))
 
-                # Limpar a etiqueta técnica do texto exibido ao cliente
-                texto_resposta = re.sub(padrao, "", texto_resposta).strip()
+            # Limpa a tag para não ser mostrada ao cliente no ecrã
+            resposta_visivel = re.sub(r"\[PEDIDO_CONFIRMADO:.*?\]", "", resposta_texto).strip()
 
-            st.write(texto_resposta)
-            st.session_state.messages.append({"role": "assistant", "content": texto_resposta})
+            # Enviar para a tabela 'pedidos' no Supabase
+            try:
+                supabase.table("pedidos").insert({
+                    "mesa": mesa_atual,
+                    "itens": itens_pedido,
+                    "total": total_pedido,
+                    "estado": "pendente"
+                }).execute()
+
+                # Guardar resposta e mostrar mensagem de sucesso
+                st.session_state.messages.append({"role": "assistant", "content": resposta_visivel})
+                with st.chat_message("assistant"):
+                    st.markdown(resposta_visivel)
+                    st.success("✅ **Pedido enviado com sucesso para o balcão!**")
+                    
+            except Exception as db_err:
+                st.error(f"Erro ao guardar o pedido no Supabase: {db_err}")
+        else:
+            # Resposta normal durante a conversa
+            st.session_state.messages.append({"role": "assistant", "content": resposta_texto})
+            with st.chat_message("assistant"):
+                st.markdown(resposta_texto)
+
+    except Exception as e:
+        st.error(f"Erro ao comunicar com o assistente: {e}")
