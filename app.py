@@ -75,30 +75,32 @@ st.markdown("""
     }
 
     /* 4. Correção da Caixa Inferior (Elimina a Barra Branca) */
-    div[data-testid="stBottomBlockContainer"] {
+ div[data-testid="stBottomBlockContainer"] {
         background-color: #131314 !important;
     }
 
     div[data-testid="stChatInput"] {
         background-color: #1e1f20 !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 28px !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    div[data-testid="stChatInput"] textarea {
-        color: #e3e3e3 !important;
+    /* Força o texto BRANCO em tempo real enquanto estás a DIGITAR (:focus e :active) */
+    div[data-testid="stChatInput"] textarea,
+    div[data-testid="stChatInput"] textarea:focus,
+    div[data-testid="stChatInput"] textarea:active,
+    div[data-baseweb="textarea"] textarea {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        caret-color: #ffffff !important; /* Cor do cursor a piscar */
         background-color: transparent !important;
     }
 
+    /* Cor do texto de ajuda (Placeholder) */
     div[data-testid="stChatInput"] textarea::placeholder {
         color: #8e918f !important;
-    }
-
-    /* Ocultar elementos nativos desnecessários */
-    header, footer {
-        visibility: hidden !important;
-        height: 0 !important;
+        -webkit-text-fill-color: #8e918f !important;
     }
     </style>
 """, unsafe_allow_html=True)
