@@ -8,7 +8,7 @@ from supabase import create_client, Client
 # ⚙️ CONFIGURAÇÃO DO ESTABELECIMENTO
 # ==========================================
 NOME_ESTABELECIMENTO = "Café Triangulo"
-LOGO_URL = "https://raw.githubusercontent.com/danielrecto-art/snackbar-atendente/main/logo2.png"
+LOGO_URL = "https://raw.githubusercontent.com/danielrecto-art/snackbar-atendente/main/file_000000005f0881f49a73ed28f23b0776.png"
 
 # Configuração da Página
 st.set_page_config(
@@ -29,34 +29,24 @@ st.markdown("""
         font-family: 'Google Sans', 'Inter', -apple-system, sans-serif;
     }
     
-    /* 2. Cabeçalho Centralizado */
+    /* 2. Cabeçalho Centralizado (Apenas Logo + Mesa) */
     .header-container {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 1.5rem 0 1rem 0;
-        margin-bottom: 1.5rem;
+        padding: 1.2rem 0 0.8rem 0;
+        margin-bottom: 1rem;
     }
     
     .logo-img {
         width: 500px;
         height: 400px;
         object-fit: cover;
-        border-radius: 18px;
+        border-radius: 20px;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
         border: 1px solid rgba(255, 255, 255, 0.12);
-        margin-bottom: 0.8rem;
-    }
-    
-    .brand-title {
-        font-weight: 600;
-        font-size: 2.1rem;
-        letter-spacing: -0.5px;
-        background: linear-gradient(90deg, #4285f4, #9b51e0, #d96570);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0;
+        margin-bottom: 0.5rem;
     }
     
     .table-badge {
@@ -67,7 +57,7 @@ st.markdown("""
         border-radius: 20px;
         font-size: 0.85rem;
         font-weight: 500;
-        margin-top: 0.7rem;
+        margin-top: 0.4rem;
     }
 
     /* 3. Balões de Conversa e Texto */
@@ -145,14 +135,13 @@ supabase = init_supabase()
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ==========================================
-# 3. CABEÇALHO
+# 3. CABEÇALHO (LOGO + MESA)
 # ==========================================
 mesa_atual = st.query_params.get("mesa", "Mesa 01")
 
 st.markdown(f"""
     <div class="header-container">
         <img src="{LOGO_URL}" class="logo-img" alt="Logo">
-        <h1 class="brand-title">{NOME_ESTABELECIMENTO}</h1>
         <div class="table-badge">📍 {mesa_atual}</div>
     </div>
 """, unsafe_allow_html=True)
