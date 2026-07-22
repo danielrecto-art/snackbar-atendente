@@ -8,10 +8,9 @@ from supabase import create_client, Client
 # ⚙️ CONFIGURAÇÃO DO ESTABELECIMENTO
 # ==========================================
 NOME_ESTABELECIMENTO = "Café Triangulo"
-# Link corrigido para carregamento direto da imagem no GitHub (raw)
 LOGO_URL = "https://raw.githubusercontent.com/danielrecto-art/snackbar-atendente/main/file_000000005f0881f49a73ed28f23b0776.png"
 
-# Configuração da Página do Streamlit
+# Configuração da Página
 st.set_page_config(
     page_title=f"{NOME_ESTABELECIMENTO} - Atendente Virtual",
     page_icon="☕",
@@ -19,89 +18,107 @@ st.set_page_config(
 )
 
 # ==========================================
-# 🎨 ESTILO ESTILO GEMINI (CUSTOM CSS)
+# 🎨 DESIGN FLUIDO ESTILO GEMINI (CSS REVISADO)
 # ==========================================
 st.markdown("""
     <style>
-    /* Estilo geral e fundo moderno */
+    /* 1. Fundo do App e Fonte Geral */
     .stApp {
-        background-color: #0f1117;
-        color: #e2e8f0;
+        background-color: #131314 !important;
+        color: #e3e3e3 !important;
+        font-family: 'Google Sans', 'Inter', -apple-system, sans-serif;
     }
     
-    /* Centralizar e estilizar o cabeçalho */
+    /* 2. Cabeçalho Centralizado */
     .header-container {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 1.5rem 0 1rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         margin-bottom: 1.5rem;
     }
     
     .logo-img {
-        width: 85px;
-        height: 85px;
-        object-fit: contain;
+        width: 76px;
+        height: 76px;
+        object-fit: cover;
+        border-radius: 18px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         margin-bottom: 0.8rem;
-        filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.4));
     }
     
     .brand-title {
-        font-family: 'Inter', sans-serif;
-        font-weight: 700;
-        font-size: 1.8rem;
+        font-weight: 600;
+        font-size: 2.1rem;
         letter-spacing: -0.5px;
-        background: linear-gradient(135deg, #a8c7fa 0%, #e8def8 100%);
+        background: linear-gradient(90deg, #4285f4, #9b51e0, #d96570);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin: 0;
     }
     
-    /* Badge da Mesa estilo Pílula Gemini */
     .table-badge {
-        background: rgba(168, 199, 250, 0.1);
-        border: 1px solid rgba(168, 199, 250, 0.25);
-        color: #a8c7fa;
+        background: rgba(66, 133, 244, 0.12);
+        border: 1px solid rgba(66, 133, 244, 0.25);
+        color: #7cacf8;
         padding: 4px 16px;
         border-radius: 20px;
         font-size: 0.85rem;
         font-weight: 500;
-        margin-top: 0.6rem;
-        display: inline-block;
+        margin-top: 0.7rem;
     }
 
-    /* Balões de Chat fluídos */
-    [data-testid="stChatMessage"] {
-        background-color: #1a1d24 !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        border-radius: 18px !important;
-        padding: 1rem !important;
-        margin-bottom: 0.8rem !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    /* 3. Balões de Conversa e Correção de Texto */
+    div[data-testid="stChatMessage"] {
+        background-color: #1e1f20 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 20px !important;
+        padding: 1rem 1.2rem !important;
+        margin-bottom: 1rem !important;
     }
 
-    /* Caixa de entrada estilo caixa do Gemini */
-    [data-testid="stChatInput"] {
-        border-radius: 28px !important;
-        background-color: #1e222d !important;
+    /* Garante visibilidade e contraste absoluto do texto */
+    div[data-testid="stChatMessage"] p, 
+    div[data-testid="stChatMessage"] span,
+    div[data-testid="stChatMessage"] div {
+        color: #e3e3e3 !important;
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+    }
+
+    /* 4. Correção da Caixa Inferior (Elimina a Barra Branca) */
+    div[data-testid="stBottomBlockContainer"] {
+        background-color: #131314 !important;
+    }
+
+    div[data-testid="stChatInput"] {
+        background-color: #1e1f20 !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    }
-    
-    [data-testid="stChatInput"]:focus-within {
-        border-color: #a8c7fa !important;
-        box-shadow: 0 0 10px rgba(168, 199, 250, 0.2) !important;
+        border-radius: 28px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    /* Esconder o cabeçalho padrão do Streamlit para manter visual limpo */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
+    div[data-testid="stChatInput"] textarea {
+        color: #e3e3e3 !important;
+        background-color: transparent !important;
+    }
+
+    div[data-testid="stChatInput"] textarea::placeholder {
+        color: #8e918f !important;
+    }
+
+    /* Ocultar elementos nativos desnecessários */
+    header, footer {
+        visibility: hidden !important;
+        height: 0 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 1. CARREGAR SEGREDOS (ST.SECRETS)
+# 1. CARREGAR SEGREDOS
 # ==========================================
 try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
@@ -122,7 +139,7 @@ supabase = init_supabase()
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ==========================================
-# 3. CABEÇALHO DA APLICAÇÃO (LOGO + NOME)
+# 3. CABEÇALHO
 # ==========================================
 mesa_atual = st.query_params.get("mesa", "Mesa 01")
 
@@ -190,7 +207,6 @@ if prompt := st.chat_input("Pede aqui o teu café, bebida ou refeição..."):
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
 
-    # Formatar histórico para a API do Gemini
     chat_history = []
     for m in st.session_state.messages:
         role = "user" if m["role"] == "user" else "model"
