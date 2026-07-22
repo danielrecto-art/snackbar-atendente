@@ -4,12 +4,101 @@ from google import genai
 from google.genai import types
 from supabase import create_client, Client
 
+# ==========================================
+# ⚙️ CONFIGURAÇÃO DO ESTABELECIMENTO
+# ==========================================
+# ✏️ Altera aqui o nome do teu estabelecimento e o link do logótipo
+NOME_ESTABELECIMENTO = "Café Triangulo"  # Altera para o nome pretendido
+LOGO_URL = "https://cdn-icons-png.flaticon.com/512/3075/3075977.png"  # Link para a tua imagem/logo (PNG)
+
 # Configuração da Página do Streamlit
 st.set_page_config(
-    page_title="N's Snack-Bar - Atendente Virtual",
-    page_icon="🍔",
+    page_title=f"{NOME_ESTABELECIMENTO} - Atendente Virtual",
+    page_icon="☕",
     layout="centered"
 )
+
+# ==========================================
+# 🎨 ESTILO ESTILO GEMINI (CUSTOM CSS)
+# ==========================================
+st.markdown("""
+    <style>
+    /* Estilo geral e fundo moderno */
+    .stApp {
+        background-color: #0f1117;
+        color: #e2e8f0;
+    }
+    
+    /* Centralizar e estilizar o cabeçalho */
+    .header-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 0 1rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 1.5rem;
+    }
+    
+    .logo-img {
+        width: 85px;
+        height: 85px;
+        object-fit: contain;
+        margin-bottom: 0.8rem;
+        filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.4));
+    }
+    
+    .brand-title {
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 1.8rem;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #a8c7fa 0%, #e8def8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+    
+    /* Badge da Mesa estilo Pílula Gemini */
+    .table-badge {
+        background: rgba(168, 199, 250, 0.1);
+        border: 1px solid rgba(168, 199, 250, 0.25);
+        color: #a8c7fa;
+        padding: 4px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-top: 0.6rem;
+        display: inline-block;
+    }
+
+    /* Balões de Chat fluídos */
+    [data-testid="stChatMessage"] {
+        background-color: #1a1d24 !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 18px !important;
+        padding: 1rem !important;
+        margin-bottom: 0.8rem !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Caixa de entrada estilo caixa do Gemini */
+    [data-testid="stChatInput"] {
+        border-radius: 28px !important;
+        background-color: #1e222d !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+    
+    [data-testid="stChatInput"]:focus-within {
+        border-color: #a8c7fa !important;
+        box-shadow: 0 0 10px rgba(168, 199, 250, 0.2) !important;
+    }
+
+    /* Esconder o cabeçalho padrão do Streamlit para manter visual limpo */
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # 1. CARREGAR SEGREDOS (ST.SECRETS)
@@ -18,12 +107,12 @@ try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-except Exception as e:
-    st.error("⚠️ As chaves de API não foram encontradas. Configura os 'Secrets' no Streamlit Cloud.")
+except Exception:
+    st.error("⚠️ As chaves de API não foram encontradas no 'Secrets' do Streamlit Cloud.")
     st.stop()
 
 # ==========================================
-# 2. INICIALIZAR LIGAÇÕES (SUPABASE E GEMINI)
+# 2. INICIALIZAR LIGAÇÕES
 # ==========================================
 @st.cache_resource
 def init_supabase() -> Client:
@@ -33,20 +122,25 @@ supabase = init_supabase()
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ==========================================
-# 3. IDENTIFICAÇÃO DA MESA (VIA URL)
+# 3. CABEÇALHO DA APLICAÇÃO (LOGO + NOME)
 # ==========================================
-# Lê o parâmetro ?mesa=Mesa%2001 da URL (Predefinição: Mesa 01)
 mesa_atual = st.query_params.get("mesa", "Mesa 01")
 
-st.title("🍔 N's Snack-Bar")
-st.caption(f"📍 A atender na: **{mesa_atual}**")
+st.markdown(f"""
+    <div class="header-container">
+        <img src="{LOGO_URL}" class="logo-img" alt="Logo">
+        <h1 class="brand-title">{NOME_ESTABELECIMENTO}</h1>
+        <div class="table-badge">📍 {mesa_atual}</div>
+    </div>
+""", unsafe_allow_html=True)
 
 # ==========================================
-# 4. INSTRUÇÃO DO SISTEMA (EMENTA E REGRAS DA IA)
+# 4. INSTRUÇÃO DO SISTEMA
 # ==========================================
-SYSTEM_INSTRUCTION = """
-És o Atendente Virtual simpático e eficiente do "N's Snack-Bar".
+SYSTEM_INSTRUCTION = f"""
+És o Atendente Virtual simpático e eficiente do "{NOME_ESTABELECIMENTO}".
 O teu objetivo é ajudar o cliente a fazer o pedido para a mesa onde se encontra.
+Podes pontualmente ser divertido, e com algumas piadas.
 
 EMENTA & PREÇOS:
 - Café / Descafeinado: 1.00 EUR
@@ -63,41 +157,40 @@ REGRAS DE ATENDIMENTO:
 1. Responde sempre em Português de Portugal.
 2. Ajuda com personalizações (ex: tosta sem manteiga, café curto).
 3. Mantém a conta atualizada e indica sempre o total acumulado ao cliente.
-4. Quando o cliente CONFIRMAR EXPLICITAMENTE que quer enviar/finalizar o pedido (ex: "podes enviar", "confirmo", "está tudo"):
+4. Quando o cliente CONFIRMAR EXPLICITAMENTE que quer enviar/finalizar o pedido:
    - Responde ao cliente a confirmar que o pedido vai dar entrada na cozinha/balcão.
-   - No FINAL ABSOLUTO da tua resposta, adiciona OBRIGATORIAMENTE esta tag exata (sem mais nada a seguir):
+   - No FINAL ABSOLUTO da tua resposta, adiciona OBRIGATORIAMENTE esta tag exata:
      [PEDIDO_CONFIRMADO: <lista_dos_itens> | <total_numerico>]
 
-   Exemplo de tag no final:
-   [PEDIDO_CONFIRMADO: 1x Café, 1x Tosta Mista sem manteiga | 4.50]
+   Exemplo: [PEDIDO_CONFIRMADO: 1x Café, 1x Tosta Mista | 4.50]
 """
 
 # ==========================================
-# 5. GERIR HISTÓRICO DAS MENSAGENS
+# 5. HISTÓRICO DE MENSAGENS
 # ==========================================
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "assistant", 
-            "content": f"Olá! Bem-vindo ao **N's Snack-Bar**! 👋\nEstou a atender a **{mesa_atual}**. O que vai desejar hoje?"
+            "content": f"Olá! Bem-vindo ao **{NOME_ESTABELECIMENTO}**! 👋\nComo posso ajudar o teu pedido na **{mesa_atual}** hoje?"
         }
     ]
 
-# Mostrar histórico de conversa no ecrã
+# Mostrar histórico
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
+    avatar = "✨" if msg["role"] == "assistant" else "👤"
+    with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
 
 # ==========================================
-# 6. PROCESSAR ENTRADA DO CLIENTE
+# 6. ENTRADA DE DADOS DO CLIENTE
 # ==========================================
-if prompt := st.chat_input("Escreve o teu pedido aqui..."):
-    # Guardar e exibir mensagem do utilizador
+if prompt := st.chat_input("Pede aqui o teu café, bebida ou refeição..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
 
-    # Converter histórico para o formato exigido pelo Gemini SDK
+    # Formatar histórico para a API do Gemini
     chat_history = []
     for m in st.session_state.messages:
         role = "user" if m["role"] == "user" else "model"
@@ -108,10 +201,9 @@ if prompt := st.chat_input("Escreve o teu pedido aqui..."):
             )
         )
 
-    # Chamar a API do Gemini
     try:
         response = client.models.generate_content(
-            model="gemini-3.1-flash-lite",
+            model="gemini-2.5-flash",
             contents=chat_history,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
@@ -120,18 +212,13 @@ if prompt := st.chat_input("Escreve o teu pedido aqui..."):
         )
         
         resposta_texto = response.text
-
-        # Verificar se a IA confirmou o pedido (procura pela tag secreta)
         tag_match = re.search(r"\[PEDIDO_CONFIRMADO:\s*(.*?)\s*\|\s*([\d\.]+)\]", resposta_texto)
 
         if tag_match:
             itens_pedido = tag_match.group(1)
             total_pedido = float(tag_match.group(2))
-
-            # Limpa a tag para não ser mostrada ao cliente no ecrã
             resposta_visivel = re.sub(r"\[PEDIDO_CONFIRMADO:.*?\]", "", resposta_texto).strip()
 
-            # Enviar para a tabela 'pedidos' no Supabase
             try:
                 supabase.table("pedidos").insert({
                     "mesa": mesa_atual,
@@ -140,19 +227,17 @@ if prompt := st.chat_input("Escreve o teu pedido aqui..."):
                     "estado": "pendente"
                 }).execute()
 
-                # Guardar resposta e mostrar mensagem de sucesso
                 st.session_state.messages.append({"role": "assistant", "content": resposta_visivel})
-                with st.chat_message("assistant"):
+                with st.chat_message("assistant", avatar="✨"):
                     st.markdown(resposta_visivel)
                     st.success("✅ **Pedido enviado com sucesso para o balcão!**")
                     
             except Exception as db_err:
-                st.error(f"Erro ao guardar o pedido no Supabase: {db_err}")
+                st.error(f"Erro ao registar o pedido: {db_err}")
         else:
-            # Resposta normal durante a conversa
             st.session_state.messages.append({"role": "assistant", "content": resposta_texto})
-            with st.chat_message("assistant"):
+            with st.chat_message("assistant", avatar="✨"):
                 st.markdown(resposta_texto)
 
     except Exception as e:
-        st.error(f"Erro ao comunicar com o assistente: {e}")
+        st.error(f"Erro na ligação com o assistente: {e}")
