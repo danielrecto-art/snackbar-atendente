@@ -70,12 +70,8 @@ st.markdown("""
     }
 
     /* Garante visibilidade e contraste absoluto do texto */
-    div[data-testid="stChatMessage"] p, 
-    div[data-testid="stChatMessage"] span,
-    div[data-testid="stChatMessage"] div {
-        color: #e3e3e3 !important;
-        font-size: 1rem !important;
-        line-height: 1.6 !important;
+    [data-testid="stChatMessage"] * {
+        color: #ffffff !important;
     }
 
     /* 4. Correção da Caixa Inferior (Elimina a Barra Branca) */
