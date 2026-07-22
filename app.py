@@ -9,7 +9,7 @@ from supabase import create_client, Client
 # ==========================================
 # ✏️ Altera aqui o nome do teu estabelecimento e o link do logótipo
 NOME_ESTABELECIMENTO = "Café Triangulo"  # Altera para o nome pretendido
-LOGO_URL = "https://cdn-icons-png.flaticon.com/512/3075/3075977.png"  # Link para a tua imagem/logo (PNG)
+LOGO_URL = "https://github.com/danielrecto-art/snackbar-atendente/blob/main/file_000000005f0881f49a73ed28f23b0776.png"  # Link para a tua imagem/logo (PNG)
 
 # Configuração da Página do Streamlit
 st.set_page_config(
