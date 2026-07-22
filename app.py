@@ -7,7 +7,7 @@ from supabase import create_client, Client
 # ==========================================
 # ⚙️ CONFIGURAÇÃO DO ESTABELECIMENTO
 # ==========================================
-NOME_ESTABELECIMENTO = ""
+NOME_ESTABELECIMENTO = "Triângulo"
 LOGO_URL = "https://raw.githubusercontent.com/danielrecto-art/snackbar-atendente/main/logo2.png"
 
 # Configuração da Página
