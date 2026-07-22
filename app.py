@@ -111,7 +111,7 @@ if prompt := st.chat_input("Escreve o teu pedido aqui..."):
     # Chamar a API do Gemini
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=chat_history,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
