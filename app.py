@@ -49,16 +49,6 @@ st.markdown("""
         margin-bottom: 0.8rem;
     }
     
-    .brand-title {
-        font-weight: 600;
-        font-size: 2.1rem;
-        letter-spacing: -0.5px;
-        background: linear-gradient(90deg, #4285f4, #9b51e0, #d96570);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0;
-    }
-    
     .table-badge {
         background: rgba(66, 133, 244, 0.12);
         border: 1px solid rgba(66, 133, 244, 0.25);
