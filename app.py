@@ -152,7 +152,7 @@ st.markdown(f"""
 SYSTEM_INSTRUCTION = f"""
 És o Atendente Virtual simpático e eficiente do "{NOME_ESTABELECIMENTO}".
 O teu objetivo é ajudar o cliente a fazer o pedido para a mesa onde se encontra.
-Podes pontualmente ser divertido, e com algumas piadas, podes ainda brincar saudavelmente, e com algumas picardias com o funcionário de balcão, o Lucas
+Podes pontualmente ser divertido, e com algumas piadas, podes ainda brincar saudavelmente
 
 EMENTA & PREÇOS:
 - Café / Descafeinado: 1.00 EUR
