@@ -7,8 +7,8 @@ from supabase import create_client, Client
 # ==========================================
 # ⚙️ CONFIGURAÇÃO DO ESTABELECIMENTO
 # ==========================================
-NOME_ESTABELECIMENTO = "Triângulo"
-LOGO_URL = "https://raw.githubusercontent.com/danielrecto-art/snackbar-atendente/main/logo2.png"
+NOME_ESTABELECIMENTO = "Café Triangulo"
+LOGO_URL = "https://raw.githubusercontent.com/danielrecto-art/snackbar-atendente/main/file_000000005f0881f49a73ed28f23b0776.png"
 
 # Configuração da Página
 st.set_page_config(
@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 🎨 DESIGN FLUIDO ESTILO GEMINI (CSS REVISADO)
+# 🎨 DESIGN FLUIDO ESTILO GEMINI
 # ==========================================
 st.markdown("""
     <style>
@@ -40,13 +40,23 @@ st.markdown("""
     }
     
     .logo-img {
-        width: 500px;
-        height: 400px;
+        width: 76px;
+        height: 76px;
         object-fit: cover;
         border-radius: 18px;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
         border: 1px solid rgba(255, 255, 255, 0.12);
         margin-bottom: 0.8rem;
+    }
+    
+    .brand-title {
+        font-weight: 600;
+        font-size: 2.1rem;
+        letter-spacing: -0.5px;
+        background: linear-gradient(90deg, #4285f4, #9b51e0, #d96570);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
     }
     
     .table-badge {
@@ -60,7 +70,7 @@ st.markdown("""
         margin-top: 0.7rem;
     }
 
-    /* 3. Balões de Conversa e Correção de Texto */
+    /* 3. Balões de Conversa e Texto */
     div[data-testid="stChatMessage"] {
         background-color: #1e1f20 !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -69,13 +79,15 @@ st.markdown("""
         margin-bottom: 1rem !important;
     }
 
-    /* Garante visibilidade e contraste absoluto do texto */
+    /* Forçar todo o texto das mensagens a ser branco */
     [data-testid="stChatMessage"] * {
         color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }
 
-    /* 4. Correção da Caixa Inferior (Elimina a Barra Branca) */
- div[data-testid="stBottomBlockContainer"] {
+    /* 4. Caixa Inferior e Campo de Escrita (Fundo Escuro + Texto Branco) */
+    div[data-testid="stBottomBlockContainer"],
+    .stBottomBlockContainer {
         background-color: #131314 !important;
     }
 
@@ -86,21 +98,27 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    /* Força o texto BRANCO em tempo real enquanto estás a DIGITAR (:focus e :active) */
-    div[data-testid="stChatInput"] textarea,
-    div[data-testid="stChatInput"] textarea:focus,
-    div[data-testid="stChatInput"] textarea:active,
-    div[data-baseweb="textarea"] textarea {
+    /* Força Fundo Escuro (#1e1f20) e Texto Branco (#ffffff) em TODOS os níveis do Input */
+    div[data-testid="stChatInput"] *,
+    div[data-baseweb="base-input"],
+    div[data-baseweb="textarea"],
+    div[data-testid="stChatInput"] textarea {
+        background-color: #1e1f20 !important;
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
-        caret-color: #ffffff !important; /* Cor do cursor a piscar */
-        background-color: transparent !important;
+        caret-color: #ffffff !important;
     }
 
     /* Cor do texto de ajuda (Placeholder) */
     div[data-testid="stChatInput"] textarea::placeholder {
-        color: #8e918f !important;
-        -webkit-text-fill-color: #8e918f !important;
+        color: #9aa0a6 !important;
+        -webkit-text-fill-color: #9aa0a6 !important;
+    }
+
+    /* Ocultar elementos nativos desnecessários */
+    header, footer {
+        visibility: hidden !important;
+        height: 0 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -143,7 +161,7 @@ st.markdown(f"""
 # 4. INSTRUÇÃO DO SISTEMA
 # ==========================================
 SYSTEM_INSTRUCTION = f"""
-És o Empregado Virtual simpático e eficiente do "Café Triângulo".
+És o Atendente Virtual simpático e eficiente do "{NOME_ESTABELECIMENTO}".
 O teu objetivo é ajudar o cliente a fazer o pedido para a mesa onde se encontra.
 Podes pontualmente ser divertido, e com algumas piadas.
 
@@ -207,7 +225,7 @@ if prompt := st.chat_input("Pede aqui o teu café, bebida ou refeição..."):
 
     try:
         response = client.models.generate_content(
-            model="gemini-3.5-flash-lite",
+            model="gemini-3.1-flash-lite",
             contents=chat_history,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
