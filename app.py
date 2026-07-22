@@ -40,8 +40,8 @@ st.markdown("""
     }
     
     .logo-img {
-        width: 76px;
-        height: 76px;
+        width: 500px;
+        height: 400px;
         object-fit: cover;
         border-radius: 18px;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
